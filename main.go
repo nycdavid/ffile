@@ -46,11 +46,16 @@ func main() {
 			mutex.Lock()
 			defer mutex.Unlock()
 
-			fmt.Println(" __,  _, _,_ _, _ __,")
-			fmt.Println(" |_  / \\ | | |\\ | | \\")
-			fmt.Println(" |   \\ / | | | \\| |_/")
-			fmt.Println(" ~    ~  `~' ~  ~ ~  ")
-			fmt.Println("")
+			/*
+				The code below would require a mutex because of the multiple calls to fmt.Println.
+
+				fmt.Println(" __,  _, _,_ _, _ __,")
+				fmt.Println(" |_  / \\ | | |\\ | | \\")
+				fmt.Println(" |   \\ / | | | \\| |_/")
+				fmt.Println(" ~    ~  `~' ~  ~ ~  ")
+				fmt.Println("")
+
+			*/
 			fmt.Println(fi.Name())
 		}(f) // always explicitly pass this argument if looping + generating goroutines
 	}
