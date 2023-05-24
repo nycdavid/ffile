@@ -43,7 +43,7 @@ func main() {
 			log.Fatal(e)
 		}
 
-		contents2[f.Name()] = split(content, 10)
+		contents2[f.Name()] = Split(content, 10)
 	}
 
 	var hits []string
@@ -59,7 +59,7 @@ func main() {
 	fmt.Println(hits)
 }
 
-func split(input []byte, delimiter byte) [][]byte {
+func Split(input []byte, delimiter byte) [][]byte {
 	var container []byte
 	var result [][]byte
 	for _, b := range input {
