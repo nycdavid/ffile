@@ -1,11 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"io/fs"
 	"log"
 	"os"
-	"sync"
+	"strings"
 )
 
 /*
@@ -29,36 +29,53 @@ import (
 */
 
 func main() {
-	//term := os.Args[1]
-
-	var wg sync.WaitGroup
-	var mutex sync.Mutex
+	term := os.Args[1]
 
 	files, e := os.ReadDir("./testfiles")
 	if e != nil {
 		log.Fatal(e)
 	}
 
+	contents2 := make(map[string][][]byte, len(files))
+
 	for _, f := range files {
-		wg.Add(1)
-		go func(fi fs.DirEntry) {
-			defer wg.Done()
-			mutex.Lock()
-			defer mutex.Unlock()
+		content, e := os.ReadFile(fmt.Sprintf("./testfiles/%s", f.Name()))
+		if e != nil {
+			log.Fatal(e)
+		}
 
-			/*
-				The code below would require a mutex because of the multiple calls to fmt.Println.
-
-				fmt.Println(" __,  _, _,_ _, _ __,")
-				fmt.Println(" |_  / \\ | | |\\ | | \\")
-				fmt.Println(" |   \\ / | | | \\| |_/")
-				fmt.Println(" ~    ~  `~' ~  ~ ~  ")
-				fmt.Println("")
-
-			*/
-			fmt.Println(fi.Name())
-		}(f) // always explicitly pass this argument if looping + generating goroutines
+		contents2[f.Name()] = Split(content, 10)
 	}
 
-	wg.Wait()
+	var hits []string
+
+	for fname, lines := range contents2 {
+		for i, line := range lines {
+			if strings.Contains(string(line), term) {
+				hits = append(hits, fmt.Sprintf("%s:%d", fname, i+1))
+			}
+		}
+	}
+
+	fmt.Println(hits)
+}
+
+func Split(input []byte, delimiter byte) [][]byte {
+	var result [][]byte
+	buffer := bytes.Buffer{}
+
+	for _, b := range input {
+		if b == delimiter {
+			result = append(result, append([]byte(nil), buffer.Bytes()...))
+			buffer.Reset()
+		} else {
+			buffer.WriteByte(b)
+		}
+	}
+
+	if buffer.Len() > 0 {
+		result = append(result, append([]byte(nil), buffer.Bytes()...))
+	}
+
+	return result
 }
