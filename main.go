@@ -36,7 +36,7 @@ func main() {
 		log.Fatal(e)
 	}
 
-	contents2 := make(map[string][][]byte, len(files))
+	contents := make(map[string][][]byte, len(files))
 
 	for _, f := range files {
 		content, e := os.ReadFile(fmt.Sprintf("./testfiles/%s", f.Name()))
@@ -44,12 +44,12 @@ func main() {
 			log.Fatal(e)
 		}
 
-		contents2[f.Name()] = Split(content, 10)
+		contents[f.Name()] = Split(content, 10)
 	}
 
 	var hits []string
 
-	for fname, lines := range contents2 {
+	for fname, lines := range contents {
 		for i, line := range lines {
 			if strings.Contains(string(line), term) {
 				hits = append(hits, fmt.Sprintf("%s:%d", fname, i+1))
