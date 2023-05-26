@@ -31,6 +31,14 @@ func TestSplit(t *testing.T) {
 				[]byte("Hello"),
 			},
 		},
+		{
+			name: "edge case: empty input slice",
+			input: []any{
+				[]byte{},
+				byte('-'),
+			},
+			expected: [][]byte{},
+		},
 	}
 
 	for i, tc := range testCases {
