@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -60,15 +61,20 @@ func main() {
 }
 
 func Split(input []byte, delimiter byte) [][]byte {
-	var container []byte
 	var result [][]byte
+	buffer := bytes.Buffer{}
+
 	for _, b := range input {
 		if b == delimiter {
-			result = append(result, container)
-			container = make([]byte, 0)
+			result = append(result, append([]byte(nil), buffer.Bytes()...))
+			buffer.Reset()
 		} else {
-			container = append(container, b)
+			buffer.WriteByte(b)
 		}
+	}
+
+	if buffer.Len() > 0 {
+		result = append(result, append([]byte(nil), buffer.Bytes()...))
 	}
 
 	return result
