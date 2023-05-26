@@ -79,3 +79,7 @@ func Split(input []byte, delimiter byte) [][]byte {
 
 	return result
 }
+
+func FindIn(term string, contents [][]byte) string {
+	return ""
+}

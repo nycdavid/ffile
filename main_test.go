@@ -58,3 +58,33 @@ func TestSplit(t *testing.T) {
 		})
 	}
 }
+
+func TestFindIn(t *testing.T) {
+	testCases := []struct {
+		name     string
+		input    []any
+		expected string
+	}{
+		{
+			name: "happy path",
+			input: []any{
+				"world",
+				[][]byte{
+					[]byte("hello"),
+					[]byte("world"),
+				},
+			},
+			expected: "2",
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual := FindIn(tc.input[0].(string), tc.input[1].([][]byte))
+
+			if actual != tc.expected {
+				t.Errorf("[%d] Expected %s, got %s", i+1, tc.expected, actual)
+			}
+		})
+	}
+}
