@@ -50,10 +50,12 @@ func main() {
 	var hits []string
 
 	for fname, lines := range contents {
-		for i, line := range lines {
-			if strings.Contains(string(line), term) {
-				hits = append(hits, fmt.Sprintf("%s:%d", fname, i+1))
-			}
+		chnl := make(chan int)
+		go FindIn(term, lines, chnl)
+		result := <-chnl
+
+		if result != -1 {
+			hits = append(hits, fmt.Sprintf("%s:%d", fname, result))
 		}
 	}
 
@@ -80,6 +82,16 @@ func Split(input []byte, delimiter byte) [][]byte {
 	return result
 }
 
-func FindIn(term string, contents [][]byte) string {
-	return ""
+/*
+Returns the line number of the hit or -1 if it isn't present.
+*/
+func FindIn(term string, contents [][]byte, chnl chan int) {
+	for i, line := range contents {
+		if strings.Contains(string(line), term) {
+			chnl <- i + 1
+			return
+		}
+	}
+
+	chnl <- -1
 }

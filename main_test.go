@@ -63,7 +63,7 @@ func TestFindIn(t *testing.T) {
 	testCases := []struct {
 		name     string
 		input    []any
-		expected string
+		expected int
 	}{
 		{
 			name: "happy path",
@@ -74,16 +74,18 @@ func TestFindIn(t *testing.T) {
 					[]byte("world"),
 				},
 			},
-			expected: "2",
+			expected: 2,
 		},
 	}
 
 	for i, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := FindIn(tc.input[0].(string), tc.input[1].([][]byte))
+			chnl := make(chan int)
+			go FindIn(tc.input[0].(string), tc.input[1].([][]byte), chnl)
+			actual := <-chnl
 
 			if actual != tc.expected {
-				t.Errorf("[%d] Expected %s, got %s", i+1, tc.expected, actual)
+				t.Errorf("[%d] Expected %d, got %d", i+1, tc.expected, actual)
 			}
 		})
 	}
