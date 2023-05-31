@@ -62,6 +62,11 @@ func main() {
 	fmt.Println(hits)
 }
 
+type hit struct {
+	fname string
+	line  int
+}
+
 func Split(input []byte, delimiter byte) [][]byte {
 	var result [][]byte
 	buffer := bytes.Buffer{}
@@ -85,10 +90,10 @@ func Split(input []byte, delimiter byte) [][]byte {
 /*
 Returns the line number of the hit or -1 if it isn't present.
 */
-func FindIn(term string, contents [][]byte, chnl chan int) {
+func FindIn(fname string, term string, contents [][]byte, hits chan hit) {
 	for i, line := range contents {
 		if strings.Contains(string(line), term) {
-			chnl <- i + 1
+			hits <- hit{fname: fname, line: i + 1}
 			return
 		}
 	}

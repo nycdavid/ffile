@@ -60,16 +60,23 @@ func TestSplit(t *testing.T) {
 }
 
 func TestFindIn(t *testing.T) {
+	type input struct {
+		fname    string
+		term     string
+		contents [][]byte
+	}
+
 	testCases := []struct {
 		name     string
-		input    []any
+		input    input
 		expected int
 	}{
 		{
 			name: "happy path",
-			input: []any{
-				"world",
-				[][]byte{
+			input: input{
+				fname: "anon.txt",
+				term:  "world",
+				contents: [][]byte{
 					[]byte("hello"),
 					[]byte("world"),
 				},
@@ -80,8 +87,8 @@ func TestFindIn(t *testing.T) {
 
 	for i, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			chnl := make(chan int)
-			go FindIn(tc.input[0].(string), tc.input[1].([][]byte), chnl)
+			results := make(chan hit, 1)
+			go FindIn(tc.input.fname, tc.input.term, tc.input.contents, results)
 			actual := <-chnl
 
 			if actual != tc.expected {
