@@ -37,6 +37,7 @@ func main() {
 	}
 
 	contents := make(map[string][][]byte, len(files))
+	maxNumberOfLines := 0
 
 	for _, f := range files {
 		content, e := os.ReadFile(fmt.Sprintf("./testfiles/%s", f.Name()))
@@ -45,17 +46,23 @@ func main() {
 		}
 
 		contents[f.Name()] = Split(content, 10)
+		maxNumberOfLines += len(contents[f.Name()])
 	}
 
 	var hits []string
 
-	for fname, lines := range contents {
-		chnl := make(chan int)
-		go FindIn(term, lines, chnl)
-		result := <-chnl
+	chnl := make(chan hit, maxNumberOfLines)
 
-		if result != -1 {
-			hits = append(hits, fmt.Sprintf("%s:%d", fname, result))
+	for fname, lines := range contents {
+		go FindIn(fname, term, lines, chnl)
+	}
+
+	for {
+		select {
+		case v := <-chnl:
+			hits = append(hits, fmt.Sprintf("%s:%d", v.fname, v.line))
+		default:
+			return
 		}
 	}
 
@@ -87,9 +94,6 @@ func Split(input []byte, delimiter byte) [][]byte {
 	return result
 }
 
-/*
-Returns the line number of the hit or -1 if it isn't present.
-*/
 func FindIn(fname string, term string, contents [][]byte, hits chan hit) {
 	for i, line := range contents {
 		if strings.Contains(string(line), term) {
@@ -97,6 +101,4 @@ func FindIn(fname string, term string, contents [][]byte, hits chan hit) {
 			return
 		}
 	}
-
-	chnl <- -1
 }
