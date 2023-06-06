@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"sync"
 	"testing"
 )
 
@@ -54,6 +56,61 @@ func TestSplit(t *testing.T) {
 
 			if len(tc.expected) != len(actual) {
 				t.Errorf("[%d] Expected length %d, got %d", i+1, len(tc.expected), len(actual))
+			}
+		})
+	}
+}
+
+func TestFindIn(t *testing.T) {
+	type input struct {
+		fname    string
+		term     string
+		contents [][]byte
+	}
+
+	testCases := []struct {
+		name     string
+		input    input
+		expected string
+	}{
+		{
+			name: "happy path",
+			input: input{
+				fname: "anon.txt",
+				term:  "world",
+				contents: [][]byte{
+					[]byte("hello"),
+					[]byte("world"),
+				},
+			},
+			expected: "anon.txt:2",
+		},
+	}
+
+	for i, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			chnl := make(chan hit, 1)
+			var hits []string
+			var wg sync.WaitGroup
+
+			wg.Add(1)
+			go func() {
+				FindIn(tc.input.fname, tc.input.term, tc.input.contents, chnl)
+				wg.Done()
+			}()
+
+			go func() {
+				wg.Wait()
+				close(chnl)
+			}()
+
+			for v := range chnl {
+				hits = append(hits, fmt.Sprintf("%s:%d", v.fname, v.line))
+			}
+			actual := hits[0]
+
+			if actual != tc.expected {
+				t.Errorf("[%d] Expected %s, got %s", i+1, tc.expected, actual)
 			}
 		})
 	}

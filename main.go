@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 )
 
 /*
@@ -36,7 +37,8 @@ func main() {
 		log.Fatal(e)
 	}
 
-	contents2 := make(map[string][][]byte, len(files))
+	contents := make(map[string][][]byte, len(files))
+	maxNumberOfLines := 0
 
 	for _, f := range files {
 		content, e := os.ReadFile(fmt.Sprintf("./testfiles/%s", f.Name()))
@@ -44,20 +46,37 @@ func main() {
 			log.Fatal(e)
 		}
 
-		contents2[f.Name()] = Split(content, 10)
+		contents[f.Name()] = Split(content, 10)
+		maxNumberOfLines += len(contents[f.Name()])
 	}
 
 	var hits []string
 
-	for fname, lines := range contents2 {
-		for i, line := range lines {
-			if strings.Contains(string(line), term) {
-				hits = append(hits, fmt.Sprintf("%s:%d", fname, i+1))
-			}
-		}
+	chnl := make(chan hit, maxNumberOfLines)
+
+	var wg sync.WaitGroup
+
+	for fname, lines := range contents {
+		wg.Add(1)
+		go func(fname string, lines [][]byte) {
+			FindIn(fname, term, lines, chnl)
+			wg.Done()
+		}(fname, lines)
 	}
 
-	fmt.Println(hits)
+	go func() {
+		wg.Wait()
+		close(chnl)
+	}()
+
+	for v := range chnl {
+		hits = append(hits, fmt.Sprintf("%s:%d", v.fname, v.line))
+	}
+}
+
+type hit struct {
+	fname string
+	line  int
 }
 
 func Split(input []byte, delimiter byte) [][]byte {
@@ -78,4 +97,13 @@ func Split(input []byte, delimiter byte) [][]byte {
 	}
 
 	return result
+}
+
+func FindIn(fname string, term string, contents [][]byte, hits chan hit) {
+	for i, line := range contents {
+		if strings.Contains(string(line), term) {
+			hits <- hit{fname: fname, line: i + 1}
+			return
+		}
+	}
 }
