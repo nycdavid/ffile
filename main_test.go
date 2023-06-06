@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 )
 
@@ -90,17 +91,22 @@ func TestFindIn(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			chnl := make(chan hit, 1)
 			var hits []string
-			go FindIn(tc.input.fname, tc.input.term, tc.input.contents, chnl)
+			var wg sync.WaitGroup
 
-			for {
-				select {
-				case v := <-chnl:
-					hits = append(hits, fmt.Sprintf("%s:%d", v.fname, v.line))
-				default:
-					return
-				}
+			wg.Add(1)
+			go func() {
+				FindIn(tc.input.fname, tc.input.term, tc.input.contents, chnl)
+				wg.Done()
+			}()
+
+			go func() {
+				wg.Wait()
+				close(chnl)
+			}()
+
+			for v := range chnl {
+				hits = append(hits, fmt.Sprintf("%s:%d", v.fname, v.line))
 			}
-
 			actual := hits[0]
 
 			if actual != tc.expected {

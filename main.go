@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 )
 
 /*
@@ -53,20 +54,24 @@ func main() {
 
 	chnl := make(chan hit, maxNumberOfLines)
 
+	var wg sync.WaitGroup
+
 	for fname, lines := range contents {
-		go FindIn(fname, term, lines, chnl)
+		wg.Add(1)
+		go func(fname string, lines [][]byte) {
+			FindIn(fname, term, lines, chnl)
+			wg.Done()
+		}(fname, lines)
 	}
 
-	for {
-		select {
-		case v := <-chnl:
-			hits = append(hits, fmt.Sprintf("%s:%d", v.fname, v.line))
-		default:
-			return
-		}
-	}
+	go func() {
+		wg.Wait()
+		close(chnl)
+	}()
 
-	fmt.Println(hits)
+	for v := range chnl {
+		hits = append(hits, fmt.Sprintf("%s:%d", v.fname, v.line))
+	}
 }
 
 type hit struct {
